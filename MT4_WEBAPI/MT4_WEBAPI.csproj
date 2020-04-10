@@ -185,8 +185,7 @@
     <Folder Include="Views\Webapi\" />
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\..\..\..\..\Program Files %28x86%29\MySQL\MySQL Connector Net 8.0.19\Assemblies\v4.5.2\MySql.Data.dll" />
-    <Analyzer Include="..\..\dllimport\Debug\dllimport.dll" />
+    <Analyzer Include="..\Debug\dllimport.dll" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

@@ -78,6 +78,7 @@ extern "C" __declspec(dllexport) int AddUser(int account, char name[128], char g
 extern "C" __declspec(dllexport) int GetUser(int account);
 extern "C" __declspec(dllexport) int UpdateUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16]);
 extern "C" __declspec(dllexport) int test();
+//extern "C" __declspec(dllexport) int Withdraw();
 /*** µn¤J ***/
 void __declspec(dllexport) Connect() 
 {
