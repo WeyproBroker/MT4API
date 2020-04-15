@@ -17,15 +17,22 @@ namespace MT4_WEBAPI.Controllers
         static extern int UpdateUser(int account, char[] name, char[] group, int leverage, char[] password, char[] password_investor, char[] email, char[] country, char[] state, char[] city, char[] address, char[] comment, char[] phone, char[] zipcode);
         [DllImport("dllimport.dll", EntryPoint = "GetUser", CallingConvention = CallingConvention.Cdecl)]
         static extern int GetUser(int account);
-        [DllImport("dllimport.dll", EntryPoint = "test", CallingConvention = CallingConvention.Cdecl)]
-        static extern int test();
+        [DllImport("dllimport.dll", EntryPoint = "GetUserDetail", CallingConvention = CallingConvention.Cdecl)]
+        static extern IntPtr GetUserDetail(int account);
+        [DllImport("dllimport.dll", EntryPoint = "test", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        static extern IntPtr test(int account);
+        [DllImport("dllimport.dll", EntryPoint = "Withdraw", CallingConvention = CallingConvention.Cdecl)]
+        static extern int Transaction(int account, int amount, char[] comment);
+
+        /**** 檢查密碼 ****/
         [HttpPost]
-        public JsonResult CheckPassword(int Account, string Password)
+        public JsonResult CheckPassword(int account, string password)
         {
-            int res = CheckPassword(Account, Password.ToCharArray());
+            int res = CheckPassword(account, password.ToCharArray());
             return this.Json(res, JsonRequestBehavior.AllowGet);
         }
-
+        
+        /**** 檢查帳號 ****/
         [HttpGet]
         // GET: Webapi
         public JsonResult CheckAccount(int account)
@@ -34,19 +41,35 @@ namespace MT4_WEBAPI.Controllers
             return this.Json(res, JsonRequestBehavior.AllowGet);
         }
 
+        /*** 新增帳號 ****/
         [HttpPost]
-        public JsonResult AddUser(int Account, string Name, string Group, int? Leverage, string Password, string Password_investor, string Email, string Country, string State, string City, string Address, string Comment, string Phone, string Zipcode)
+        public JsonResult AddUser(int account, string name, string group, int? leverage, string password, string password_investor, string email, string country, string state, string city, string address, string comment, string phone, string zipcode)
         {
-            if (Leverage == null)
+            if (leverage == null)
             {
-                Leverage = 100;
+                leverage = 100;
             }
-            int res = AddUser(Account, Name.ToCharArray(), Group.ToCharArray(), Convert.ToInt32(Leverage), Password.ToCharArray(), Password_investor.ToCharArray(), Email.ToCharArray(), Country.ToCharArray(), State.ToCharArray(), City.ToCharArray(), Address.ToCharArray(), Comment.ToCharArray(), Phone.ToCharArray(), Zipcode.ToCharArray());
+            int res = AddUser(account, name.ToCharArray(), group.ToCharArray(), Convert.ToInt32(leverage), password.ToCharArray(), password_investor.ToCharArray(), email.ToCharArray(), country.ToCharArray(), state.ToCharArray(), city.ToCharArray(), address.ToCharArray(), comment.ToCharArray(), phone.ToCharArray(), zipcode.ToCharArray());
             return this.Json(res, JsonRequestBehavior.AllowGet);
         }
 
+        /***** 更新帳號 ****/
+        [HttpPost]
+        public JsonResult UpdateUser(int account, string name, string group, int? leverage, string password, string password_investor, string email, string country, string state, string city, string address, string comment, string phone, string zipcode)
+        {
+            int res = UpdateUser(account, name.ToCharArray(), group.ToCharArray(), Convert.ToInt32(leverage), password.ToCharArray(), password_investor.ToCharArray(), email.ToCharArray(), country.ToCharArray(), state.ToCharArray(), city.ToCharArray(), address.ToCharArray(), comment.ToCharArray(), phone.ToCharArray(), zipcode.ToCharArray());
+            return this.Json(res, JsonRequestBehavior.AllowGet);
+        }
+        /***** 查詢帳號詳細資料 *****/
         [HttpGet]
-        public JsonResult GetEquity(int Account)
+        public JsonResult GetUserData(int account)
+        {
+            string data = Marshal.PtrToStringAnsi(GetUserDetail(account));
+            return this.Json(data, JsonRequestBehavior.AllowGet);
+        }
+        /**** 查詢淨利 ****/
+        [HttpGet]
+        public JsonResult GetEquity(int account)
         {
             /*** 欄位代號 ***/
             int login_number = 0;  // 帳號
@@ -61,7 +84,7 @@ namespace MT4_WEBAPI.Controllers
             Equity data = new Equity();
 
             MySqlConnection conn = connMySQL();
-            String user_cmdText = "SELECT * FROM mt4_users WHERE LOGIN =" + Account;
+            String user_cmdText = "SELECT * FROM mt4_users WHERE LOGIN =" + account;
             MySqlCommand user_cmd = new MySqlCommand(user_cmdText, conn);
             MySqlDataReader user_reader = user_cmd.ExecuteReader(); //execure the reader
             while (user_reader.Read())
@@ -76,7 +99,7 @@ namespace MT4_WEBAPI.Controllers
             }
             conn.Close();
             conn = connMySQL();
-            string trades_cmdText = "SELECT * FROM mt4_trades WHERE LOGIN =" + Account;
+            string trades_cmdText = "SELECT * FROM mt4_trades WHERE LOGIN =" + account;
             MySqlCommand trades_cmd = new MySqlCommand(trades_cmdText, conn);
             MySqlDataReader trades_reader = trades_cmd.ExecuteReader(); //execure the reader
             while (trades_reader.Read())
@@ -94,13 +117,24 @@ namespace MT4_WEBAPI.Controllers
             }
             return this.Json(data, JsonRequestBehavior.AllowGet);
         }
+
+        /**** 交易手續【出金、入金、內轉】 ****/
+        [HttpGet]
+        public JsonResult Transaction(int account, int amount, string comment)
+        {
+            int res;
+            res = Transaction(account, amount, comment.ToCharArray());
+            return this.Json(res, JsonRequestBehavior.AllowGet);
+        }
         /**** 測試API ****/
         [HttpGet]
-        public JsonResult test_api()
+        public JsonResult test_api(int account)
         {
-            int status = test();
-            return this.Json(status, JsonRequestBehavior.AllowGet);
+            string strIP = Marshal.PtrToStringAnsi(test(account));
+            return this.Json(strIP, JsonRequestBehavior.AllowGet);
         }
+
+        /**** 連接MYSQL ****/
         public MySqlConnection connMySQL()
         {
             string dbHost = "127.0.0.1";

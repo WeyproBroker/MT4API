@@ -25,7 +25,7 @@ END_MESSAGE_MAP()
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-CManagerAPISampleApp::CManagerAPISampleApp() : m_factory("C:\\Windows\\System32\\mtmanapi.dll")
+CManagerAPISampleApp::CManagerAPISampleApp() : m_factory("C:\\Windows\\mtmanapi.dll")
 {
 	CManagerAPISampleApp::InitInstance();
 }
@@ -71,16 +71,8 @@ int CManagerAPISampleApp::ExitInstance()
 	return CWinApp::ExitInstance();
 }
 //+------------------------------------------------------------------+
-extern "C" __declspec(dllexport) void Connect();
-extern "C" __declspec(dllexport) string GetUserDetail(int account);
-extern "C" __declspec(dllexport) int CheckPassword(int account, char password[16]);
-extern "C" __declspec(dllexport) int AddUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16]);
-extern "C" __declspec(dllexport) int GetUser(int account);
-extern "C" __declspec(dllexport) int UpdateUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16]);
-extern "C" __declspec(dllexport) int test();
-//extern "C" __declspec(dllexport) int Withdraw();
 /*** 登入 ***/
-void __declspec(dllexport) Connect() 
+extern "C" __declspec(dllexport) void Connect()
 {
 	CManagerAPISampleApp();
 	LPCSTR server;
@@ -97,22 +89,29 @@ void __declspec(dllexport) Connect()
 }
 
 /*** 取得用戶詳細資料 ****/
-string __declspec(dllexport) GetUserDetail(int account) 
+extern "C" __declspec(dllexport) string GetUserDetail(int account)
 {
-	char data[10000] = { 0 };
-	char name[128] = { 0 };
-	Connect(); 
+	Connect();
 	int users_total = 1;
 	int login = account;
 	UserRecord *user = ExtManager->UserRecordsRequest(&login, &users_total);
-	for (int i = 0; i < 128; i++) 
-	{
-		name[i] = user->name[i];
-	}
-	return name;
+	string str_login = to_string(user->login);
+	string str_name = user->name;
+	string str_group = user->group;
+	string str_leverage = to_string(user->leverage);
+	string str_agent = to_string(user->agent_account);
+	string str_email = user->email;
+	string str_comment = user->comment;
+	string str_enable = to_string(user->enable);
+	string str_read_only = to_string(user->enable_read_only);
+	string str_report = to_string(user->send_reports);
+	string str_format = "login=" + str_login + ",name=" + str_name + ",group=" + str_group + ",leverage=" + str_leverage + ",agent=" + str_agent + ",email=" + str_email + ",comment=" + str_comment + ",enable=" + str_enable + ",read_only=" + str_read_only + ",report=" + str_report;
+	CHAR *data = new char[str_format.length() + 1];
+	strcpy_s(data, str_format.length() + 1, str_format.c_str());
+	return data;
 }
 /**** 檢查用戶密碼 ****/
-int __declspec(dllexport) CheckPassword(int account, char password[16]) 
+extern "C" __declspec(dllexport) int CheckPassword(int account, char password[16])
 {
 	Connect();
 	std::string pass = "";
@@ -128,26 +127,9 @@ int __declspec(dllexport) CheckPassword(int account, char password[16])
 }
 
 /*** 註冊帳號 ***/
-int __declspec(dllexport) AddUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16])
+extern "C" __declspec(dllexport) int AddUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16])
 {
 	Connect();
-	///*** PHP輸入的值 ***/
-	//std::string account = "34";
-	//std::string password = "www123";
-	//std::string name = "eee";
-	//std::string group = "manager";
-	//std::string email = "rrr@qwe.com";
-
-	//char array_password[16] = { 0 };
-	//char array_name[128] = { 0 };
-	//char array_group[16] = { 0 };
-	//char array_email[48] = { 0 };
-
-	//strcpy_s(array_password, password);
-	//strcpy_s(array_name, name);
-	//strcpy_s(array_group, group);
-	//strcpy_s(array_email, email);
-
 	int res = RET_ERROR;
 	UserRecord user = { 0 };
 	//for (int i = 1000; i < 100000; i++)
@@ -220,7 +202,7 @@ int __declspec(dllexport) AddUser(int account, char name[128], char group[16], i
 }
 
 /*** 取得使用者 ***/
-int __declspec(dllexport) GetUser(int account) 
+extern "C" __declspec(dllexport) int GetUser(int account)
 {
 	Connect();
 	int users_total = 1;
@@ -230,7 +212,7 @@ int __declspec(dllexport) GetUser(int account)
 }
 
 /**** 帳號資料修改 ****/
-int __declspec(dllexport) UpdateUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16])
+extern "C" __declspec(dllexport) int UpdateUser(int account, char name[128], char group[16], int leverage, char password[16], char password_investor[16], char email[48], char country[32], char state[32], char city[32], char address[128], char comment[64], char phone[32], char zipcode[16])
 {
 	Connect();
 	UserRecord user = { 0 };
@@ -289,7 +271,43 @@ int __declspec(dllexport) UpdateUser(int account, char name[128], char group[16]
 	return res;
 }
 
-int __declspec(dllexport) test() 
+
+extern "C" __declspec(dllexport) CHAR* test(int account)
 {
-	return 2;
+	Connect();
+	int users_total = 1;
+	int login = account;
+	UserRecord *user = ExtManager->UserRecordsRequest(&login, &users_total);
+	string str_login = to_string(user->login);
+	string str_name = user->name;
+	string str_group = user->group;
+	string str_leverage = to_string(user->leverage);
+	string str_agent = to_string(user->agent_account);
+	string str_email = user->email;
+	string str_comment = user->comment;
+	string str_enable = to_string(user->enable);
+	string str_read_only = to_string(user->enable_read_only);
+	string str_report = to_string(user->send_reports);
+	string str_format = "login=" + str_login + ",name=" + str_name + ",group=" + str_group + ",leverage=" + str_leverage + ",agent=" + str_agent + ",email=" + str_email + ",comment=" + str_comment + ",enable=" + str_enable + ",read_only=" + str_read_only + ",report=" + str_report;
+	CHAR *data = new char[str_format.length() + 1];
+	strcpy_s(data, str_format.length() + 1, str_format.c_str());
+	return data;
+}
+
+/***** 交易手續【出金、入金、內轉】 *****/
+extern "C" __declspec(dllexport) int Transaction(int account, int amount, char comment[32])
+{
+	Connect();
+	TradeTransInfo info = { 0 };
+	char tmp[32];
+	info.type = TT_BR_BALANCE;
+	info.cmd = OP_BALANCE;
+	info.orderby = account;
+	info.price = double(amount);
+	for (int i = 0; i < 32; i++) 
+	{
+		info.comment[i] = comment[i];
+	}
+	int res = ExtManager->TradeTransaction(&info);
+	return res;
 }
