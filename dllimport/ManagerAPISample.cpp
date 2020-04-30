@@ -366,7 +366,7 @@ extern "C" __declspec(dllexport) double GetBalance(char server[64], int account)
 }
 
 /***** 交易手續【出金、入金、內轉】 *****/
-extern "C" __declspec(dllexport) int Transaction(char server[64], int account, int amount, char comment[32])
+extern "C" __declspec(dllexport) int Transaction(char server[64],int account, double amount, char comment[32])
 {
 	std::string str_server = "";
 	int i = 0;
@@ -381,7 +381,7 @@ extern "C" __declspec(dllexport) int Transaction(char server[64], int account, i
 	info.type = TT_BR_BALANCE;
 	info.cmd = OP_BALANCE;
 	info.orderby = account;
-	info.price = double(amount);
+	info.price = amount;
 	for (int i = 0; i < 32; i++) 
 	{
 		info.comment[i] = comment[i];

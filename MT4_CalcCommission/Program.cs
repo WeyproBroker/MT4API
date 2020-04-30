@@ -90,18 +90,15 @@ namespace MT4_CalcCommission
         {
             List<accountList> accountList = new List<accountList>();
             List<clientList> clientList = new List<clientList>();
-
-            /*** Broker的客戶 ****/
-            clientList = GetClientList(broker_product, broker_product.mt4_commission_account);
             accountList.Add(
-                new accountList()
+                new Program.accountList()
                 {
-                    broker_productList = broker_product,
                     ib_mt4_login = broker_product.mt4_commission_account,
-                    clientList = clientList
+                    broker_productList = broker_product,
                 }
             );
-
+            while (GetIBCode(broker_product, accountList).Count() > 0) ;
+            
             /**** IB的客戶 ****/
             MySqlConnection conn = connMySQL("ci_broker_" + broker_product.bId);   
             string cmdText = "SELECT * FROM client_product WHERE apply_account = 1 AND pId=" + broker_product.id;
@@ -116,7 +113,6 @@ namespace MT4_CalcCommission
                         {
                             ib_mt4_login = Convert.ToInt32(reader["mt4_login"]),
                             broker_productList = broker_product,
-                            clientList = clientList
                         }
                     );
                 }
@@ -147,13 +143,41 @@ namespace MT4_CalcCommission
             return clientList;
         }
 
+        public List<accountList> GetIBCode(broker_productList broker_product, List<accountList> accountList)
+        {
+            List<accountList> ibList = new List<Program.accountList>();
+            MySqlConnection conn = connMySQL("ci_broker_" + broker_product.bId);
+            MySqlCommand cmd;
+            foreach (accountList accountValue in accountList)
+            {
+                string cmdText = "SELECT * FROM client_product WHERE apply_account = 1 AND introducer_IB_Code = " + accountValue.ib_mt4_login + " AND pId = " + broker_product.id;
+                cmd = new MySqlCommand(cmdText, conn);
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ibList.Add(
+                            new Program.accountList()
+                            {
+                                ib_mt4_login = Convert.ToInt32(reader["mt4_login"]),
+                                broker_productList = broker_product,
+                            }
+                        );
+                    }
+                }
+            }
+            
+            conn.Close();
+            return ibList;
+        }
+
         private string run_calc_commission(accountList account)
         {
             string clientlist = "";
-            foreach(clientList List in account.clientList)
-            {
-                clientlist = clientlist + List.client_mt4_login + ",";
-            }
+            //foreach(clientList List in account.clientList)
+            //{
+            //    clientlist = clientlist + List.client_mt4_login + ",";
+            //}
             string Api_Url = "http://mt4api.4webdemo.com/";
             HttpClient client = new HttpClient();
             var json_content = new Dictionary<string, string>
@@ -186,7 +210,6 @@ namespace MT4_CalcCommission
         {
             public broker_productList broker_productList { get; set; }
             public int ib_mt4_login { get; set; }
-            public List<clientList> clientList { get; set; }
         }
 
         public class clientList
